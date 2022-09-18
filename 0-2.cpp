@@ -15,7 +15,7 @@ public:
 			int check_word{ 0 }, check_capital{ 0 }, check_number{ 0 };
 			char text = ' ';
 			while (feof(fp) == 0) {//32/127
-				fscanf_s(fp, "%c", &text);
+				fscanf_s(fp, "%c", &text, sizeof(text));
 				if (32 < text && text < 127) {
 					if ('0' <= text && text <= '9') {
 						check_number = 1;
