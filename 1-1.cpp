@@ -1,11 +1,16 @@
 #include <iostream>
+#include <random>
 #include <gl/glew.h>
 #include <gl/freeglut.h>
 #include <gl/freeglut_ext.h>
 
+
+std::random_device rd;
+std::uniform_real_distribution<GLclampf> uid(0, 1);
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int	h);
 GLvoid Keyboard(unsigned char key, int x, int y);
+int on_timer;
 struct RGB {
 	GLclampf R;
 	GLclampf G;
@@ -14,6 +19,7 @@ struct RGB {
 RGB Color;
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
+	on_timer = 0;
 	Color.R = 1.0f;
 	Color.G = 1.0f;
 	Color.B = 0.0f;
@@ -49,6 +55,17 @@ GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
 {
 	glViewport(0, 0, w, h);
 }
+void TimerFunction(int value)
+{
+	Color.R = uid(rd);
+	Color.G = uid(rd);
+	Color.B = uid(rd);
+	glutPostRedisplay(); // 화면 재 출력
+	if(on_timer){
+	glutTimerFunc(200, TimerFunction, 1); // 타이머함수 재 설정
+	}
+}
+
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key) {
@@ -67,6 +84,31 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 		Color.G = 0.0f;
 		Color.B = 1.0f;
 		break; //--- 배경색을 파랑색으로 설정
+	case 'a':
+		Color.R = uid(rd);
+		Color.G = uid(rd);
+		Color.B = uid(rd);
+		break;
+	case 'w':
+		Color.R = 1.0f;
+		Color.G = 1.0f;
+		Color.B = 1.0f;
+		break;
+	case 'k':
+		Color.R = 0.0f;
+		Color.G = 0.0f;
+		Color.B = 0.0f;
+		break;
+	case 't':
+		on_timer = 1;
+		glutTimerFunc(200, TimerFunction, 1);
+		break;
+	case 's':
+		on_timer = 0;
+		break;
+	case 'q':
+		glutLeaveMainLoop();
+		break;
 	}
 	glutPostRedisplay(); //--- 배경색이 바뀔 때마다 출력 콜백 함수를 호출하여 화면을 refresh 한다
 }
