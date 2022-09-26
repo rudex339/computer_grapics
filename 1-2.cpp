@@ -1,8 +1,5 @@
-﻿#include <iostream>
+﻿#include "computer_grapics_tool.h"
 #include <random>
-#include <gl/glew.h>
-#include <gl/freeglut.h>
-#include <gl/freeglut_ext.h>
 
 #define _WINDOW_HEIGHT 600
 #define _WINDOW_WIDTH 800
@@ -70,10 +67,8 @@ GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
 }
 void Mouse(int button, int state, int x, int y)
 {	
-	int w = _WINDOW_WIDTH;
-	int h = _WINDOW_HEIGHT;
-	float ox=(float)(x-(float)w/2.0)*(float)(1.0/(float)(w/2.0));
-	float oy=-(float)(y-(float)h/2.0)*(float)(1.0/(float)(h/2.0));
+	float ox, oy;
+	change_mousepoint_to_window(x, y, &ox, &oy);
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
 		if ((len * (-1)) <= ox && (len * (-1)) <= oy && ox <= len && oy <= len) {
 			Color.R = uid(rd);
