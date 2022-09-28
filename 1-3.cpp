@@ -136,6 +136,9 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 	case 'a':
 		mr.add();
 		break;
+	case 'q':
+		glutLeaveMainLoop();
+		break;
 	}
 	glutPostRedisplay(); //--- 배경색이 바뀔 때마다 출력 콜백 함수를 호출하여 화면을 refresh 한다
 }

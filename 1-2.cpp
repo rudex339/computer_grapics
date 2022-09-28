@@ -47,6 +47,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설�
 	glutDisplayFunc(drawScene); // 출력 콜백함수의 지정
 	glutReshapeFunc(Reshape); // 다시 그리기 콜백함수 지정
 	glutMouseFunc(Mouse);
+	glutKeyboardFunc(Keyboard);
 	glutMainLoop(); // 이벤트 처리 시작
 }
 
@@ -90,4 +91,13 @@ void Mouse(int button, int state, int x, int y)
 		}
 	}
 
+}
+GLvoid Keyboard(unsigned char key, int x, int y)
+{
+	switch (key) {
+	case 'q':
+		glutLeaveMainLoop();
+		break;
+	}
+	glutPostRedisplay(); //--- 배경색이 바뀔 때마다 출력 콜백 함수를 호출하여 화면을 refresh 한다
 }
