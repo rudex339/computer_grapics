@@ -2,8 +2,8 @@
 #include <random>
 
 std::random_device rd;
-std::uniform_real_distribution<GLclampf> uid(-1.0, 0.7);
-std::uniform_real_distribution<GLclampf> Cud(0, 1);
+//std::mt19937 gen(rd());
+
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int	h);
 GLvoid Keyboard(unsigned char key, int x, int y);
@@ -29,6 +29,8 @@ public:
 		}
 	}
 	void add() {
+		std::uniform_real_distribution <float> uid(-1, 0.7);
+		std::uniform_real_distribution<float> Cud(0.0, 1.0);
 		if (count < 5) {
 			Rect[count].x = uid(rd);
 			Rect[count].y = uid(rd);
@@ -65,12 +67,12 @@ public:
 };
 
 moving_rect mr;
-bool left_button;
+bool left_button=false;
 int choice;
-POINT P_mouse;
+float P_mousex;
+float P_mousey;
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
-	left_button=false;
 	//--- 윈도우 생성하기
 	glutInit(&argc, argv); // glut 초기화
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA); // 디스플레이 모드 설정
@@ -99,12 +101,10 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 {
 	//--- 변경된 배경색 설정
-	glClearColor(0.0f, 0.0f, 0.0f, 1.0f); //--- 바탕색을 변경
+	glClearColor(1.0f, 1.0f, 1.0f, 1.0f); //--- 바탕색을 변경
 	glClear(GL_COLOR_BUFFER_BIT); //--- 설정된 색으로 전체를 칠하기
 
 	mr.draw();
-
-	//glRectf(-0.5f,-0.5f,0.5f,0.5f);
 	glutSwapBuffers(); //--- 화면에 출력하기
 }
 GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
@@ -116,8 +116,8 @@ void Mouse(int button, int state, int x, int y)
 	float ox, oy;
 	change_mousepoint_to_window(x, y, &ox, &oy);
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-		P_mouse.x = x;
-		P_mouse.y = y;
+		P_mousex = ox;
+		P_mousey = oy;
 		choice = mr.check(ox, oy);
 		left_button = true;
 	}
@@ -141,14 +141,13 @@ GLvoid Keyboard(unsigned char key, int x, int y)
 }
 void Motion(int x, int y)
 {
-	int mx, my;
+	float mx, my;
 	if (left_button == true)
 	{
-		mx = P_mouse.x - x;
-		my = P_mouse.y - y;
-		mr.move(choice, mx, my);
-		P_mouse.x = x;
-		P_mouse.y = y;
+		change_mousepoint_to_window(x, y, &mx, &my);
+		mr.move(choice, mx- P_mousex, my- P_mousey);
+		P_mousex = mx;
+		P_mousey = my;
 		glutPostRedisplay();
 	}
 	
