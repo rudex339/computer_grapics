@@ -44,7 +44,7 @@ public:
 	}
 	void check(float left, float right,float top, float bottom) {
 		for (int i = 99; i >= 0; i--) {
-			if ((Rect[i].x > right) && (Rect[i].y+len > bottom) && (Rect[i].x+len < left) && (Rect[i].y < top)) {
+			if ((Rect[i].x < right) && (Rect[i].y < top) && (Rect[i].x+len >left) && (Rect[i].y+len >bottom)) {
 				Rect[i].on = false;
 			}
 		}
@@ -67,7 +67,7 @@ public:
 	}
 	int check(float ox, float oy) {
 		if (on) {
-			if (x<ox && x + len>ox && y<oy && y + len>oy) {
+			if (x-len<ox && x + len>ox && y-len<oy && y + len>oy) {
 				return 1;
 			}
 			else return 0;
@@ -85,7 +85,7 @@ public:
 		y += my;
 	}
 	void delete_mr(moving_rect* mr) {
-		mr->check(x - len, x + len, y + len, y - len);
+		mr->check((float)(x - len), (float)(x + len), (float)(y + len), (float)(y - len));
 	}
 };
 moving_rect mr;
@@ -100,7 +100,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 	glutInit(&argc, argv); // glut 초기화
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA); // 디스플레이 모드 설정
 	glutInitWindowPosition(0, 0); // 윈도우의 위치 지정
-	glutInitWindowSize(800, 600); // 윈도우의 크기 지정
+	glutInitWindowSize(800, 800); // 윈도우의 크기 지정
 	glutCreateWindow("Example1"); // 윈도우 생성	(윈도우 이름)
 
 	//--- GLEW 초기화하기
