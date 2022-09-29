@@ -3,7 +3,7 @@
 
 std::random_device rd;
 //std::mt19937 gen(rd());
-
+#define len 0.2
 GLvoid drawScene(GLvoid);
 GLvoid Reshape(int w, int	h);
 GLvoid Keyboard(unsigned char key, int x, int y);
@@ -11,15 +11,14 @@ void Mouse(int button, int state, int x, int y);
 void Motion(int x, int y);
 struct rectangle {
 	float x, y;
+	bool on;
 	GLclampf R, G, B;
 };
 class moving_rect {
 private:
 	rectangle Rect[100];
-	int count;
 public:
 	moving_rect() {
-		count = 100;
 		std::uniform_real_distribution <float> uid(-1, 0.7);
 		std::uniform_real_distribution<float> Cud(0.0, 1.0);
 		for (int i = 0; i < 100; i++) {
@@ -28,47 +27,69 @@ public:
 			Rect[i].R = Cud(rd);
 			Rect[i].G = Cud(rd);
 			Rect[i].B = Cud(rd);
+			Rect[i].on = true;
 		}
 	}
-	void add() {
-		std::uniform_real_distribution <float> uid(-1, 0.7);
-		std::uniform_real_distribution<float> Cud(0.0, 1.0);
-		if (count < 5) {
-			Rect[count].x = uid(rd);
-			Rect[count].y = uid(rd);
-			Rect[count].R = Cud(rd);
-			Rect[count].G = Cud(rd);
-			Rect[count].B = Cud(rd);
-			count++;
-		}
-
-	}
+	
 	void draw() {
-		if (count > 0) {
-			for (int i = 0; i < count; i++) {
+		
+		for (int i = 0; i < 100; i++) {
+			if (Rect[i].on) {
 				glColor3f(Rect[i].R, Rect[i].G, Rect[i].B);
-				glRectf(Rect[i].x, Rect[i].y, Rect[i].x + 0.2, Rect[i].y + 0.2);
+				glRectf(Rect[i].x, Rect[i].y, Rect[i].x + len, Rect[i].y + len);
 			}
 		}
+		
 
 	}
-	int check(float x, float y) {
-		if (count > 0) {
-			int s;
-			for (s = count - 1; s >= 0; s--) {
-				if (Rect[s].x<x && Rect[s].x + 0.3>x && Rect[s].y<y && Rect[s].y + 0.3>y) {
-					return s;
-				}
+	void check(float left, float right,float top, float bottom) {
+		for (int i = 99; i >= 0; i--) {
+			if ((Rect[i].x > right) && (Rect[i].y+len > bottom) && (Rect[i].x+len < left) && (Rect[i].y < top)) {
+				Rect[i].on = false;
 			}
 		}
-	}
-	void move(int choice, float mx, float my) {
-		Rect[choice].x += mx;
-		Rect[choice].y += my;
 	}
 };
-
+class delete_rect {
+private:
+	float x, y;
+	bool on;
+public:
+	delete_rect() {
+		x = 0; y = 0;
+		on = false;
+	}
+	void draw() {
+		if (on) {
+			glColor3f(0.5f, 0.5f, 0.5f);
+			glRectf(x-len, y-len, x + len, y + len);
+		}
+	}
+	int check(float ox, float oy) {
+		if (on) {
+			if (x<ox && x + len>ox && y<oy && y + len>oy) {
+				return 1;
+			}
+			else return 0;
+		}
+		else {
+			x = ox;
+			y = oy;
+			on = true;
+			return 1;
+		}
+		
+	}
+	void move(float mx, float my) {
+		x += mx;
+		y += my;
+	}
+	void delete_mr(moving_rect* mr) {
+		mr->check(x - len, x + len, y + len, y - len);
+	}
+};
 moving_rect mr;
+delete_rect dr;
 bool left_button = false;
 int choice;
 float P_mousex;
@@ -107,6 +128,7 @@ GLvoid drawScene() //--- 콜백 함수: 그리기 콜백 함수
 	glClear(GL_COLOR_BUFFER_BIT); //--- 설정된 색으로 전체를 칠하기
 
 	mr.draw();
+	dr.draw();
 	glutSwapBuffers(); //--- 화면에 출력하기
 }
 GLvoid Reshape(int w, int h) //--- 콜백 함수: 다시 그리기 콜백 함수
@@ -118,16 +140,14 @@ void Mouse(int button, int state, int x, int y)
 	float ox, oy;
 	change_mousepoint_to_window(x, y, &ox, &oy);
 	if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-		P_mousex = ox;
-		P_mousey = oy;
-		choice = mr.check(ox, oy);
-		left_button = true;
+		if (dr.check(ox, oy)) {
+			P_mousex = ox;
+			P_mousey = oy;
+			left_button = true;
+		}
 	}
 	else if (button == GLUT_LEFT_BUTTON && state == GLUT_UP) {
 		left_button = false;
-	}
-	else if (button == GLUT_RIGHT_BUTTON && state == GLUT_DOWN) {
-
 	}
 	glutPostRedisplay();
 }
@@ -135,9 +155,6 @@ void Mouse(int button, int state, int x, int y)
 GLvoid Keyboard(unsigned char key, int x, int y)
 {
 	switch (key) {
-	case 'a':
-		mr.add();
-		break;
 	case 'q':
 		glutLeaveMainLoop();
 		break;
@@ -150,7 +167,8 @@ void Motion(int x, int y)
 	if (left_button == true)
 	{
 		change_mousepoint_to_window(x, y, &mx, &my);
-		mr.move(choice, mx - P_mousex, my - P_mousey);
+		dr.move(mx - P_mousex, my - P_mousey);
+		dr.delete_mr(&mr);
 		P_mousex = mx;
 		P_mousey = my;
 		glutPostRedisplay();
