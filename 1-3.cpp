@@ -61,8 +61,10 @@ public:
 		}
 	}
 	void move(int choice, float mx, float my) {
-		Rect[choice].x += mx;
-		Rect[choice].y += my;
+		if (count > 0) {
+			Rect[choice].x += mx;
+			Rect[choice].y += my;
+		}
 	}
 };
 
