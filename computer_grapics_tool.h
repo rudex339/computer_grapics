@@ -5,3 +5,5 @@
 #include <gl/freeglut_ext.h>
 
 void change_mousepoint_to_window(int px, int py,float* fx,float*fy);
+
+char* filetobuf(const char* file);
