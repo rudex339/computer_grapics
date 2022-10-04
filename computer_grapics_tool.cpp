@@ -12,8 +12,8 @@ char* filetobuf(const char* file)
 	FILE* fptr;
 	long length;
 	char* buf;
-	fptr = fopen(file, "rb"); // Open file for reading
-	if (!fptr) // Return NULL on failure
+	 // Open file for reading
+	if (fopen_s(&fptr, file, "rb")!=0) // Return NULL on failure
 		return NULL;
 	fseek(fptr, 0, SEEK_END); // Seek to the end of the file
 	length = ftell(fptr); // Find out how many bytes into the file we are

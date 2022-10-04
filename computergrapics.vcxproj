@@ -19,7 +19,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="2-0.cpp" />
+    <ClCompile Include="2-1.cpp" />
     <ClCompile Include="computer_grapics_tool.cpp" />
   </ItemGroup>
   <ItemGroup>
