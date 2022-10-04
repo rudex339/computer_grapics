@@ -17,19 +17,21 @@ GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 GLuint vao[4], vbo[2];
 GLuint s_program;
-GLfloat triShape[4][3][3] = { { //--- 삼각형 위치 값
-    { -0.5, -0.5, 0.0 }, { 0.0, -0.5, 0.0 }, { -0.25, 0.0, 0.0} },
-    {{ 0.0, -0.5, 0.0 }, { 0.5, -0.5, 0.0 }, { 0.25, 0.0, 0.0} },
-    {{ -0.5, 0.0, 0.0 }, { 0.0, 0.0, 0.0 }, { -0.25, 0.5, 0.0} },
-    {{ 0.0, 0.0, 0.0 }, { 0.5, 0.0, 0.0 }, { 0.25, 0.5, 0.0} }};
-GLfloat colors[4][3][3] = { //--- 삼각형 꼭지점 색상
-    {{ 1.0, 1.0, 0.0 }, { 1.0, 1.0, 0.0 }, { 1.0, 1.0, 0.0 } }
-,{{ 1.0, 0.0, 0.0 }, { 1.0, 0.0, 0.0 }, { 1.0, 0.0, 0.0 }}
-,{{ 0.0, 1.0, 0.0 }, { 0.0, 1.0, 0.0 }, { 0.0, 1.0, 0.0 } }
-,{{ 0.0, 0.0, 1.0 }, { 0.0, 0.0, 1.0 }, { 0.0, 0.0, 1.0 } } };
+GLfloat triShape[4][4][3] = { { //--- 삼각형 위치 값
+    { -0.5, -0.5, 0.0 }, { 0.0, -0.5, 0.0 }, { -0.25, 0.0, 0.0},{ -0.5, -0.5, 0.0 } },
+    {{ 0.0, -0.5, 0.0 }, { 0.5, -0.5, 0.0 }, { 0.25, 0.0, 0.0},{ 0.0, -0.5, 0.0 } },
+    {{ -0.5, 0.0, 0.0 }, { 0.0, 0.0, 0.0 }, { -0.25, 0.5, 0.0},{ -0.5, 0.0, 0.0 } },
+    {{ 0.0, 0.0, 0.0 }, { 0.5, 0.0, 0.0 }, { 0.25, 0.5, 0.0},{ 0.0, 0.0, 0.0 } }};
+GLfloat colors[4][4][3] = { //--- 삼각형 꼭지점 색상
+    {{ 1.0, 1.0, 0.0 }, { 1.0, 1.0, 0.0 }, { 1.0, 1.0, 0.0 },{ 1.0, 1.0, 0.0 } }
+,{{ 1.0, 0.0, 0.0 }, { 1.0, 0.0, 0.0 }, { 1.0, 0.0, 0.0 },{ 1.0, 0.0, 0.0 }}
+,{{ 0.0, 1.0, 0.0 }, { 0.0, 1.0, 0.0 }, { 0.0, 1.0, 0.0 },{ 0.0, 1.0, 0.0 } }
+,{{ 0.0, 0.0, 1.0 }, { 0.0, 0.0, 1.0 }, { 0.0, 0.0, 1.0 },{ 0.0, 0.0, 1.0 } } };
 GLfloat tir_len[4] = {0.25,0.25,0.25,0.25};
 int tir_len_change[4] = { 1,1,1,1 };
 int choice_tri=0;
+bool mod_line = 1;
+bool mod_lay = 1;
 void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
 {
     //--- 윈도우 생성하기
@@ -45,7 +47,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
     InitBuffer();
     glutDisplayFunc(drawScene);
     glutReshapeFunc(Reshape);
-   // glutKeyboardFunc(Keyboard);
+    glutKeyboardFunc(Keyboard);
     glutMouseFunc(Mouse);
     glutMainLoop();
 }
@@ -98,7 +100,7 @@ void InitBuffer()
         glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
         //--- 변수 diamond 에서 버텍스 데이터 값을 버퍼에 복사한다.
         //--- triShape 배열의 사이즈: 9 * float
-        glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GLfloat), triShape[i], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), triShape[i], GL_STATIC_DRAW);
         //--- 좌표값을 attribute 인덱스 0번에 명시한다: 버텍스 당 3* float
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
         //--- attribute 인덱스 0번을 사용가능하게 함
@@ -107,7 +109,7 @@ void InitBuffer()
         glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
         //--- 변수 colors에서 버텍스 색상을 복사한다.
         //--- colors 배열의 사이즈: 9 *float 
-        glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GLfloat), colors[i], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), colors[i], GL_STATIC_DRAW);
         //--- 색상값을 attribute 인덱스 1번에 명시한다: 버텍스 당 3*float
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
         //--- attribute 인덱스 1번을 사용 가능하게 함.
@@ -161,8 +163,8 @@ GLuint make_shaderProgram()
 GLvoid drawScene()
 {
     GLfloat rColor, gColor, bColor;
-    rColor = gColor = 1.0;
-    bColor = 1.0;
+    rColor = gColor = 0.0;
+    bColor = 0.0;
     int num_tir;
     //--- 변경된 배경색 설정
     glClearColor(rColor, gColor, bColor, 1.0f);
@@ -175,7 +177,10 @@ GLvoid drawScene()
         num_tir = (choice_tri + i)%4;
         glBindVertexArray(vao[num_tir]);
         //--- 삼각형 그리기
-        glDrawArrays(GL_TRIANGLES, 0, 3);
+        if(mod_lay)
+            glDrawArrays(GL_TRIANGLES, 0, 3);
+        if(mod_line)
+            glDrawArrays(GL_LINE_STRIP, 0, 4);
     }
     glutSwapBuffers(); //--- 화면에 출력하기
 }
@@ -200,10 +205,33 @@ void Mouse(int button, int state, int x, int y)
         triShape[choice_tri][0][0] = ox; triShape[choice_tri][0][1] = oy+tir_len[choice_tri]; triShape[choice_tri][0][2] = 0.0;
         triShape[choice_tri][1][0] = ox - tir_len[choice_tri]; triShape[choice_tri][1][1] = oy- tir_len[choice_tri]/2.0f; triShape[choice_tri][1][2] = 0.0;
         triShape[choice_tri][2][0] = ox + tir_len[choice_tri]; triShape[choice_tri][2][1] = oy- tir_len[choice_tri]/2.0f; triShape[choice_tri][2][2] = 0.0;
+        triShape[choice_tri][3][0] = ox; triShape[choice_tri][3][1] = oy + tir_len[choice_tri]; triShape[choice_tri][3][2] = 0.0;
         choice_tri++;
         choice_tri = choice_tri % 4;
         InitBuffer();
     }
     
     glutPostRedisplay();
+}
+
+GLvoid Keyboard(unsigned char key, int x, int y)
+{
+    switch (key) {
+    case 'a':
+        if (mod_lay)
+            mod_lay = 0;
+        else
+            mod_lay = 1;
+        break;
+    case 'b':
+        if (mod_line)
+            mod_line = 0;
+        else
+            mod_line = 1;
+        break;
+    case 'q':
+        glutLeaveMainLoop();
+        break;
+    }
+    glutPostRedisplay(); //--- 배경색이 바뀔 때마다 출력 콜백 함수를 호출하여 화면을 refresh 한다
 }

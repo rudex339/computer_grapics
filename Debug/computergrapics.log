@@ -1,0 +1,3 @@
+﻿  2-1.cpp
+C:\Users\Foryoucom\Documents\GitHub\computer_grapics\2-1.cpp(36,1): warning C4326: 'main'의 반환 형식이 'int'이어야 하는데 'void'입니다.
+  computergrapics.vcxproj -> C:\Users\Foryoucom\Documents\GitHub\computer_grapics\Debug\computergrapics.exe
