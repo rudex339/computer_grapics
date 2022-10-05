@@ -19,10 +19,12 @@
     </ProjectConfiguration>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="2-1.cpp">
+    <ClCompile Include="1-6.cpp">
       <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">true</ExcludedFromBuild>
     </ClCompile>
-    <ClCompile Include="2-2.cpp" />
+    <ClCompile Include="1-7.cpp">
+      <ExcludedFromBuild Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">false</ExcludedFromBuild>
+    </ClCompile>
     <ClCompile Include="computer_grapics_tool.cpp" />
   </ItemGroup>
   <ItemGroup>
