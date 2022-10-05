@@ -17,11 +17,11 @@ GLuint vertexShader; //--- 버텍스 세이더 객체
 GLuint fragmentShader; //--- 프래그먼트 세이더 객체
 GLuint vao[4], vbo[2];
 GLuint s_program;
-GLfloat triShape[4][4][3] = { { //--- 삼각형 위치 값
-    { -0.5, -0.5, 0.0 }, { 0.0, -0.5, 0.0 }, { -0.25, 0.0, 0.0},{ -0.5, -0.5, 0.0 } },
-    {{ 0.0, -0.5, 0.0 }, { 0.5, -0.5, 0.0 }, { 0.25, 0.0, 0.0},{ 0.0, -0.5, 0.0 } },
-    {{ -0.5, 0.0, 0.0 }, { 0.0, 0.0, 0.0 }, { -0.25, 0.5, 0.0},{ -0.5, 0.0, 0.0 } },
-    {{ 0.0, 0.0, 0.0 }, { 0.5, 0.0, 0.0 }, { 0.25, 0.5, 0.0},{ 0.0, 0.0, 0.0 } }};
+GLfloat triShape[4][3][3] = { { //--- 삼각형 위치 값
+    { -0.5, -0.5, 0.0 }, { 0.0, -0.5, 0.0 }, { -0.25, 0.0, 0.0} },
+    {{ 0.0, -0.5, 0.0 }, { 0.5, -0.5, 0.0 }, { 0.25, 0.0, 0.0} },
+    {{ -0.5, 0.0, 0.0 }, { 0.0, 0.0, 0.0 }, { -0.25, 0.5, 0.0} },
+    {{ 0.0, 0.0, 0.0 }, { 0.5, 0.0, 0.0 }, { 0.25, 0.5, 0.0}}};
 GLfloat colors[4][4][3] = { //--- 삼각형 꼭지점 색상
     {{ 1.0, 1.0, 0.0 }, { 1.0, 1.0, 0.0 }, { 1.0, 1.0, 0.0 },{ 1.0, 1.0, 0.0 } }
 ,{{ 1.0, 0.0, 0.0 }, { 1.0, 0.0, 0.0 }, { 1.0, 0.0, 0.0 },{ 1.0, 0.0, 0.0 }}
@@ -100,7 +100,7 @@ void InitBuffer()
         glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
         //--- 변수 diamond 에서 버텍스 데이터 값을 버퍼에 복사한다.
         //--- triShape 배열의 사이즈: 9 * float
-        glBufferData(GL_ARRAY_BUFFER, 12 * sizeof(GLfloat), triShape[i], GL_STATIC_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, 9 * sizeof(GLfloat), triShape[i], GL_STATIC_DRAW);
         //--- 좌표값을 attribute 인덱스 0번에 명시한다: 버텍스 당 3* float
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
         //--- attribute 인덱스 0번을 사용가능하게 함
@@ -180,7 +180,7 @@ GLvoid drawScene()
         if(mod_lay)
             glDrawArrays(GL_TRIANGLES, 0, 3);
         if(mod_line)
-            glDrawArrays(GL_LINE_STRIP, 0, 4);
+            glDrawArrays(GL_LINE_LOOP, 0, 3);
     }
     glutSwapBuffers(); //--- 화면에 출력하기
 }
@@ -195,7 +195,7 @@ void Mouse(int button, int state, int x, int y)
     float ox, oy;
     change_mousepoint_to_window(x, y, &ox, &oy);
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-        tir_len[choice_tri] = tir_len[choice_tri] - 0.02f*(float)tir_len_change[choice_tri];
+        tir_len[choice_tri] = tir_len[choice_tri] - 0.05f*(float)tir_len_change[choice_tri];
         if (tir_len_change[choice_tri] == 1 && tir_len[choice_tri]<0.1f) {
             tir_len_change[choice_tri] = -1;
         }
@@ -205,7 +205,6 @@ void Mouse(int button, int state, int x, int y)
         triShape[choice_tri][0][0] = ox; triShape[choice_tri][0][1] = oy+tir_len[choice_tri]; triShape[choice_tri][0][2] = 0.0;
         triShape[choice_tri][1][0] = ox - tir_len[choice_tri]; triShape[choice_tri][1][1] = oy- tir_len[choice_tri]/2.0f; triShape[choice_tri][1][2] = 0.0;
         triShape[choice_tri][2][0] = ox + tir_len[choice_tri]; triShape[choice_tri][2][1] = oy- tir_len[choice_tri]/2.0f; triShape[choice_tri][2][2] = 0.0;
-        triShape[choice_tri][3][0] = ox; triShape[choice_tri][3][1] = oy + tir_len[choice_tri]; triShape[choice_tri][3][2] = 0.0;
         choice_tri++;
         choice_tri = choice_tri % 4;
         InitBuffer();
@@ -223,7 +222,7 @@ GLvoid Keyboard(unsigned char key, int x, int y)
         else
             mod_lay = 1;
         break;
-    case 'b':
+    case 'd':
         if (mod_line)
             mod_line = 0;
         else
