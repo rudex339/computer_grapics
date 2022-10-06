@@ -1,19 +1,22 @@
 #include "computer_grapics_tool.h"
 #include <random>
 
-#define len 0.1f
+#define PI 3.14f
+#define len 0.05f
+#define Speed 0.005f
 std::random_device rd;
 
 void make_vertexShaders();
 void make_fragmentShaders();
+GLvoid Reshape(int w, int h);
+GLuint make_shaderProgram();
 void InitBuffer();
 void InitShader();
 
 GLvoid Keyboard(unsigned char key, int x, int y);
 GLvoid Mouse(int button, int state, int x, int y);
 GLvoid drawScene();
-GLvoid Reshape(int w, int h);
-GLuint make_shaderProgram();
+GLvoid TimerFunction(int value);
 
 GLint width, height;
 GLuint shaderID; //--- 세이더 프로그램 이름
@@ -25,6 +28,7 @@ struct LIST{
     GLfloat x, y;
     GLfloat triShape[3][3];
     GLfloat colors[3][3];
+    double rad;
     GLuint vao;
     LIST* next;
 };
@@ -40,6 +44,7 @@ public:
     void create_object(int number) {
         std::uniform_real_distribution <float> uid(-0.7f, 0.7f);
         std::uniform_real_distribution <float> c_uid(0.0f, 1.0f);
+        std::uniform_real_distribution <float> r_uid(0, 360);
 
         LIST* NEW;
         if (number < 0) return;
@@ -48,10 +53,11 @@ public:
                 list = new LIST;
                 list->x = uid(rd);
                 list->y = uid(rd);
+                list->rad = r_uid(rd);
                 
-                list->triShape[0][0] = list->x; list->triShape[0][1] = list->y+len; list->triShape[0][2] = 0.0;
-                list->triShape[1][0] = list->x-len; list->triShape[1][1] = list->y-len; list->triShape[1][2] = 0.0;
-                list->triShape[2][0] = list->x+len; list->triShape[2][1] = list->y-len; list->triShape[2][2] = 0.0;
+                list->triShape[0][0] = list->x + len * (GLfloat)cos(list->rad * PI / 180) * 2; list->triShape[0][1] = list->y+len* (GLfloat)sin(list->rad*PI/180)*2; list->triShape[0][2] = 0.0;
+                list->triShape[1][0] = list->x+ len * (GLfloat)cos((list->rad+120) * PI / 180); list->triShape[1][1] = list->y + len * (GLfloat)sin((list->rad + 120) * PI / 180); list->triShape[1][2] = 0.0;
+                list->triShape[2][0] = list->x+ len * (GLfloat)cos((list->rad+240) * PI / 180); list->triShape[2][1] = list->y + len * (GLfloat)sin((list->rad + 240) * PI / 180); list->triShape[2][2] = 0.0;
 
                 list->colors[0][0] = c_uid(rd); list->colors[0][1] = c_uid(rd); list->colors[0][2] = c_uid(rd);
                 list->colors[1][0] = list->colors[0][0]; list->colors[1][1] = list->colors[0][1]; list->colors[1][2] = list->colors[0][2];
@@ -62,10 +68,11 @@ public:
                 NEW = new LIST;
                 NEW->x = uid(rd);
                 NEW->y = uid(rd);
+                NEW->rad = r_uid(rd);
 
-                NEW->triShape[0][0] = NEW->x; NEW->triShape[0][1] = NEW->y + len; NEW->triShape[0][2] = 0.0;
-                NEW->triShape[1][0] = NEW->x - len; NEW->triShape[1][1] = NEW->y - len; NEW->triShape[1][2] = 0.0;
-                NEW->triShape[2][0] = NEW->x + len; NEW->triShape[2][1] = NEW->y - len; NEW->triShape[2][2] = 0.0;
+                NEW->triShape[0][0] = NEW->x + len * (GLfloat)cos(NEW->rad * PI / 180) * 2; NEW->triShape[0][1] = NEW->y + len * (GLfloat)sin(NEW->rad * PI / 180) * 2; NEW->triShape[0][2] = 0.0;
+                NEW->triShape[1][0] = NEW->x + len * (GLfloat)cos((NEW->rad + 120) * PI / 180); NEW->triShape[1][1] = NEW->y + len * (GLfloat)sin((NEW->rad + 120) * PI / 180); NEW->triShape[1][2] = 0.0;
+                NEW->triShape[2][0] = NEW->x + len * (GLfloat)cos((NEW->rad + 240) * PI / 180); NEW->triShape[2][1] = NEW->y + len * (GLfloat)sin((NEW->rad + 240) * PI / 180); NEW->triShape[2][2] = 0.0;
 
                 NEW->colors[0][0] = c_uid(rd); NEW->colors[0][1] = c_uid(rd); NEW->colors[0][2] = c_uid(rd);
                 NEW->colors[1][0] = NEW->colors[0][0]; NEW->colors[1][1] = NEW->colors[0][1]; NEW->colors[1][2] = NEW->colors[0][2];
@@ -142,6 +149,55 @@ public:
         //--- 삼각형 그리기
         glDrawArrays(GL_TRIANGLES, 0, 3);
     }
+
+    void check_hit(LIST* p_list) {
+
+        if (p_list->triShape[0][0] >= 1.0f || p_list->triShape[0][0] <= -1.0f ||
+            p_list->triShape[1][0] >= 1.0f || p_list->triShape[1][0] <= -1.0f || 
+            p_list->triShape[2][0] >= 1.0f || p_list->triShape[2][0] <= -1.0f) {
+            p_list->rad = fmodf((180 + p_list->rad),360);
+
+            p_list->triShape[0][0] = p_list->x + len * (GLfloat)cos(p_list->rad * PI / 180) * 2; p_list->triShape[0][1] = p_list->y + len * (GLfloat)sin(p_list->rad * PI / 180) * 2;
+            p_list->triShape[1][0] = p_list->x + len * (GLfloat)cos((p_list->rad + 120) * PI / 180); p_list->triShape[1][1] = p_list->y + len * (GLfloat)sin((p_list->rad + 120) * PI / 180);
+            p_list->triShape[2][0] = p_list->x + len * (GLfloat)cos((p_list->rad + 240) * PI / 180); p_list->triShape[2][1] = p_list->y + len * (GLfloat)sin((p_list->rad + 240) * PI / 180);
+
+        }
+        if (p_list->triShape[0][1] >= 1.0f || p_list->triShape[0][1] <= -1.0f ||
+            p_list->triShape[1][1] >= 1.0f || p_list->triShape[1][1] <= -1.0f ||
+            p_list->triShape[2][1] >= 1.0f || p_list->triShape[2][1] <= -1.0f) {
+            p_list->rad = 360-fmodf((p_list->rad), 360);
+
+            p_list->triShape[0][0] = p_list->x + len * (GLfloat)cos(p_list->rad * PI / 180) * 2; p_list->triShape[0][1] = p_list->y + len * (GLfloat)sin(p_list->rad * PI / 180) * 2;
+            p_list->triShape[1][0] = p_list->x + len * (GLfloat)cos((p_list->rad + 120) * PI / 180); p_list->triShape[1][1] = p_list->y + len * (GLfloat)sin((p_list->rad + 120) * PI / 180);
+            p_list->triShape[2][0] = p_list->x + len * (GLfloat)cos((p_list->rad + 240) * PI / 180); p_list->triShape[2][1] = p_list->y + len * (GLfloat)sin((p_list->rad + 240) * PI / 180);
+
+        }
+    }
+
+    void move_object() {
+        if (list == NULL) return;
+        LIST* p_list = list->next;
+        while (p_list != list) {
+            p_list->x += Speed * (GLfloat)cos(p_list->rad * PI / 180);
+            p_list->y += Speed * (GLfloat)sin(p_list->rad * PI / 180);
+
+            p_list->triShape[0][0] += Speed * (GLfloat)cos(p_list->rad * PI / 180); p_list->triShape[0][1] += Speed * (GLfloat)sin(p_list->rad * PI / 180);
+            p_list->triShape[1][0] += Speed * (GLfloat)cos(p_list->rad * PI / 180); p_list->triShape[1][1] += Speed * (GLfloat)sin(p_list->rad * PI / 180);
+            p_list->triShape[2][0] += Speed * (GLfloat)cos(p_list->rad * PI / 180); p_list->triShape[2][1] += Speed * (GLfloat)sin(p_list->rad * PI / 180);
+
+            this->check_hit(p_list);
+            p_list = p_list->next;
+        }
+        p_list->x += Speed * (GLfloat)cos(list->rad * PI / 180);
+        p_list->y += Speed * (GLfloat)sin(list->rad * PI / 180);
+
+        p_list->triShape[0][0] += Speed * (GLfloat)cos(p_list->rad * PI / 180); p_list->triShape[0][1] += Speed * (GLfloat)sin(p_list->rad * PI / 180);
+        p_list->triShape[1][0] += Speed * (GLfloat)cos(p_list->rad * PI / 180); p_list->triShape[1][1] += Speed * (GLfloat)sin(p_list->rad * PI / 180);
+        p_list->triShape[2][0] += Speed * (GLfloat)cos(p_list->rad * PI / 180); p_list->triShape[2][1] += Speed * (GLfloat)sin(p_list->rad * PI / 180);
+
+        this->check_hit(p_list);
+        this->init_buffer();
+    }
 };
 
 OBJECT object;
@@ -153,7 +209,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA);
     glutInitWindowPosition(100, 100);
-    glutInitWindowSize(800, 600);
+    glutInitWindowSize(800, 800);
     glutCreateWindow("Example1");
     //--- GLEW 초기화하기
     glewExperimental = GL_TRUE;
@@ -164,6 +220,7 @@ void main(int argc, char** argv) //--- 윈도우 출력하고 콜백함수 설정
     glutReshapeFunc(Reshape);
     glutKeyboardFunc(Keyboard);
     glutMouseFunc(Mouse);
+    glutTimerFunc(20, TimerFunction, 1);
     glutMainLoop();
 }
 
@@ -290,4 +347,11 @@ GLvoid Keyboard(unsigned char key, int x, int y)
         break;
     }
     glutPostRedisplay(); //--- 배경색이 바뀔 때마다 출력 콜백 함수를 호출하여 화면을 refresh 한다
+}
+
+void TimerFunction(int value)
+{
+    object.move_object();
+    glutPostRedisplay(); // 화면 재 출력
+    glutTimerFunc(20, TimerFunction, 1);
 }
