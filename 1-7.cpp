@@ -68,8 +68,8 @@ public:
                 NEW->triShape[2][0] = NEW->x + len; NEW->triShape[2][1] = NEW->y - len; NEW->triShape[2][2] = 0.0;
 
                 NEW->colors[0][0] = c_uid(rd); NEW->colors[0][1] = c_uid(rd); NEW->colors[0][2] = c_uid(rd);
-                NEW->colors[1][0] = list->colors[0][0]; NEW->colors[1][1] = list->colors[0][1]; NEW->colors[1][2] = list->colors[0][2];
-                NEW->colors[2][0] = list->colors[0][0]; NEW->colors[2][1] = list->colors[0][1]; NEW->colors[2][2] = list->colors[0][2];
+                NEW->colors[1][0] = NEW->colors[0][0]; NEW->colors[1][1] = NEW->colors[0][1]; NEW->colors[1][2] = NEW->colors[0][2];
+                NEW->colors[2][0] = NEW->colors[0][0]; NEW->colors[2][1] = NEW->colors[0][1]; NEW->colors[2][2] = NEW->colors[0][2];
 
                 NEW->next = list->next;
                 list->next = NEW;
@@ -130,7 +130,7 @@ public:
 
     void draw_object() {
         if (list == NULL) return;
-        glUseProgram(*s_program);
+        glUseProgram(s_program);
         LIST* p_list = list->next;
         while (p_list != list) {
             glBindVertexArray(p_list->vao);
