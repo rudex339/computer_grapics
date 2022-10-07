@@ -137,7 +137,7 @@ public:
 
     void draw_object() {
         if (list == NULL) return;
-        glUseProgram(s_program);
+        
         LIST* p_list = list->next;
         while (p_list != list) {
             glBindVertexArray(p_list->vao);
@@ -155,8 +155,19 @@ public:
         if (p_list->triShape[0][0] >= 1.0f || p_list->triShape[0][0] <= -1.0f ||
             p_list->triShape[1][0] >= 1.0f || p_list->triShape[1][0] <= -1.0f || 
             p_list->triShape[2][0] >= 1.0f || p_list->triShape[2][0] <= -1.0f) {
-            p_list->rad = fmodf((180 + p_list->rad),360);
-
+            if (p_list->rad >= 0 && p_list->rad < 90) {
+                p_list->rad = 180 - p_list->rad; p_list->x -= 0.015;
+            }
+            else if (p_list->rad >= 90 && p_list->rad < 180) {
+                p_list->rad = 180 - p_list->rad; p_list->x += 0.015;
+            }
+            else if (p_list->rad >= 180 && p_list->rad < 270) {
+                p_list->rad = 540.0 - p_list->rad; p_list->x += 0.015;
+            }
+            else if (p_list->rad >= 270 && p_list->rad < 360) {
+                p_list->rad = 540.0 - p_list->rad; p_list->x -= 0.015;
+            }
+            
             p_list->triShape[0][0] = p_list->x + len * (GLfloat)cos(p_list->rad * PI / 180) * 2; p_list->triShape[0][1] = p_list->y + len * (GLfloat)sin(p_list->rad * PI / 180) * 2;
             p_list->triShape[1][0] = p_list->x + len * (GLfloat)cos((p_list->rad + 120) * PI / 180); p_list->triShape[1][1] = p_list->y + len * (GLfloat)sin((p_list->rad + 120) * PI / 180);
             p_list->triShape[2][0] = p_list->x + len * (GLfloat)cos((p_list->rad + 240) * PI / 180); p_list->triShape[2][1] = p_list->y + len * (GLfloat)sin((p_list->rad + 240) * PI / 180);
@@ -165,13 +176,30 @@ public:
         if (p_list->triShape[0][1] >= 1.0f || p_list->triShape[0][1] <= -1.0f ||
             p_list->triShape[1][1] >= 1.0f || p_list->triShape[1][1] <= -1.0f ||
             p_list->triShape[2][1] >= 1.0f || p_list->triShape[2][1] <= -1.0f) {
-            p_list->rad = 360-fmodf((p_list->rad), 360);
+            if (p_list->rad >= 0 && p_list->rad < 90) {
+                p_list->rad = 360 - p_list->rad; p_list->y -= 0.015;
+            }
+            else if (p_list->rad >= 90 && p_list->rad < 180) {
+                p_list->rad = 360 - p_list->rad; p_list->y -= 0.015;
+            }
+            else if (p_list->rad >= 180 && p_list->rad < 270) {
+                p_list->rad = 360 - p_list->rad; p_list->y += 0.015;
+            }
+            else if (p_list->rad >= 270 && p_list->rad < 360) {
+                p_list->rad = 360 - p_list->rad; p_list->y += 0.015;
+            }
 
             p_list->triShape[0][0] = p_list->x + len * (GLfloat)cos(p_list->rad * PI / 180) * 2; p_list->triShape[0][1] = p_list->y + len * (GLfloat)sin(p_list->rad * PI / 180) * 2;
             p_list->triShape[1][0] = p_list->x + len * (GLfloat)cos((p_list->rad + 120) * PI / 180); p_list->triShape[1][1] = p_list->y + len * (GLfloat)sin((p_list->rad + 120) * PI / 180);
             p_list->triShape[2][0] = p_list->x + len * (GLfloat)cos((p_list->rad + 240) * PI / 180); p_list->triShape[2][1] = p_list->y + len * (GLfloat)sin((p_list->rad + 240) * PI / 180);
 
         }
+        p_list->x += Speed * (GLfloat)cos(p_list->rad * PI / 180);
+        p_list->y += Speed * (GLfloat)sin(p_list->rad * PI / 180);
+
+        p_list->triShape[0][0] += Speed * (GLfloat)cos(p_list->rad * PI / 180); p_list->triShape[0][1] += Speed * (GLfloat)sin(p_list->rad * PI / 180);
+        p_list->triShape[1][0] += Speed * (GLfloat)cos(p_list->rad * PI / 180); p_list->triShape[1][1] += Speed * (GLfloat)sin(p_list->rad * PI / 180);
+        p_list->triShape[2][0] += Speed * (GLfloat)cos(p_list->rad * PI / 180); p_list->triShape[2][1] += Speed * (GLfloat)sin(p_list->rad * PI / 180);
     }
 
     void move_object() {
