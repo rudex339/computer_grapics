@@ -495,8 +495,6 @@ void Mouse(int button, int state, int x, int y)
     float ox, oy;
     change_mousepoint_to_window(x, y, &ox, &oy);
     if (button == GLUT_LEFT_BUTTON && state == GLUT_DOWN) {
-
-        InitBuffer();
     }
 
     glutPostRedisplay();
