@@ -52,6 +52,7 @@ public:
     }
     void create_object(GLfloat x, GLfloat y) {
     }
+    gldelete
     void init_buffer() {
 
         glGenVertexArrays(1, &list.vao);

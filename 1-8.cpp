@@ -515,5 +515,5 @@ void TimerFunction(int value)
 {
     object.move_object();
     glutPostRedisplay(); // 화면 재 출력
-    glutTimerFunc(20, TimerFunction, 1);
+    glutTimerFunc(10, TimerFunction, 1);
 }
