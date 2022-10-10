@@ -26,10 +26,13 @@ GLuint s_program;
 struct LIST {
     GLfloat x, y;
     GLfloat Shape[3];
-    GLfloat colors[3];
-    double rad;
+    GLfloat colors[3];    
     GLuint vao;
+    GLuint vbo[2];
+
+    double rad;
     bool turn;
+    bool in_vbo;
     LIST* next;
 };
 class OBJECT {
@@ -41,7 +44,7 @@ public:
     OBJECT() {
         count = 0;
         list = NULL;
-        vbo[0] = 0; vbo[1] = 0;
+        //vbo[0] = 0; vbo[1] = 0;
     }
     void create_object(GLfloat x, GLfloat y) {
         std::uniform_real_distribution <float> c_uid(0.0f, 1.0f);
@@ -54,7 +57,7 @@ public:
             list->x = x;
             list->y = y;
             list->rad = 0;
-
+            list->in_vbo = false;
             list->Shape[0] = x; list->Shape[1] = y; list->Shape[2] = 0.0f;
             list->colors[0] = c_uid(rd); list->colors[1] = c_uid(rd); list->colors[2] = c_uid(rd);
             list->next = list;
@@ -65,7 +68,7 @@ public:
             NEW->x = x;
             NEW->y = y;
             NEW->rad = 0;
-
+            NEW->in_vbo = false;
             NEW->Shape[0] = x; NEW->Shape[1] = y; NEW->Shape[2] = 0.0f;
 
             NEW->colors[0] = c_uid(rd); NEW->colors[1] = c_uid(rd); NEW->colors[2] = c_uid(rd);
@@ -80,37 +83,54 @@ public:
     void delete_object(LIST* p_list) {
         LIST* d_list = p_list->next;
         glDeleteBuffers(1, &d_list->vao);
+<<<<<<< HEAD
+        glDeleteBuffers(2, d_list->vbo);
+=======
+>>>>>>> f52ef13f339c0663dff8aacf93c59d4213bb3540
         p_list->next = d_list->next;
         free(d_list);
     }
     void init_buffer() {
         if (list == NULL) return;
+
         LIST* p_list = list->next;
         while (p_list != list) {
-            glGenVertexArrays(1, &(p_list->vao));
-            glBindVertexArray(p_list->vao);
-            glGenBuffers(2, vbo);
-            glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+            if (p_list->in_vbo){
+                glBindVertexArray(p_list->vao);
+            }
+            else {
+                glGenVertexArrays(1, &(p_list->vao));
+                glBindVertexArray(p_list->vao);
+                glGenBuffers(2, p_list->vbo);
+            }
+            glBindBuffer(GL_ARRAY_BUFFER, p_list->vbo[0]);
             glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(GLfloat), p_list->Shape, GL_STATIC_DRAW);
             glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(0);
-            glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+            glBindBuffer(GL_ARRAY_BUFFER, p_list->vbo[1]);
             glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(GLfloat), p_list->colors, GL_STATIC_DRAW);
             glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
             glEnableVertexAttribArray(1);
+            p_list->in_vbo = true;
             p_list = p_list->next;
         }
-        glGenVertexArrays(1, &(p_list->vao));
-        glBindVertexArray(p_list->vao);
-        glGenBuffers(2, vbo);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo[0]);
+        if (p_list->in_vbo) {
+            glBindVertexArray(p_list->vao);
+        }
+        else {
+            glGenVertexArrays(1, &(p_list->vao));
+            glBindVertexArray(p_list->vao);
+            glGenBuffers(2, p_list->vbo);
+        }
+        glBindBuffer(GL_ARRAY_BUFFER, p_list->vbo[0]);
         glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(GLfloat), p_list->Shape, GL_STATIC_DRAW);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(0);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo[1]);
+        glBindBuffer(GL_ARRAY_BUFFER, p_list->vbo[1]);
         glBufferData(GL_ARRAY_BUFFER, 3 * sizeof(GLfloat), p_list->colors, GL_STATIC_DRAW);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 0, 0);
         glEnableVertexAttribArray(1);
+        p_list->in_vbo = true;
     }
 
     void draw_object() {
@@ -127,6 +147,8 @@ public:
         glBindVertexArray(p_list->vao);
         glPointSize(2.0);
         glDrawArrays(GL_POINTS, 0, 1);
+        p_list = list->next;
+
         return;
     }
 
@@ -164,6 +186,7 @@ public:
         if (p_list->next->rad >= 720) {
             delete_object(p_list);
         }
+        
         this->init_buffer();
         return;
     }
