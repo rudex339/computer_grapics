@@ -83,10 +83,9 @@ public:
     void delete_object(LIST* p_list) {
         LIST* d_list = p_list->next;
         glDeleteBuffers(1, &d_list->vao);
-<<<<<<< HEAD
+
         glDeleteBuffers(2, d_list->vbo);
-=======
->>>>>>> f52ef13f339c0663dff8aacf93c59d4213bb3540
+
         p_list->next = d_list->next;
         free(d_list);
     }

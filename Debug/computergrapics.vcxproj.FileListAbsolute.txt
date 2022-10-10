@@ -1,5 +1,0 @@
-<<<<<<< HEAD
-C:\Users\Foryoucom\Documents\GitHub\computer_grapics\Debug\computergrapics.exe
-=======
-C:\Users\고경태\Documents\GitHub\computer_grapics\Debug\computergrapics.exe
->>>>>>> f52ef13f339c0663dff8aacf93c59d4213bb3540
