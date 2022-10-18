@@ -18,22 +18,13 @@
     <ClCompile Include="computer_grapics_tool.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="1-6.cpp">
+    <ClCompile Include="1-12.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="1-7.cpp">
+    <ClCompile Include="소스.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="1-8.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="1-9.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="1-11.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="1-10.cpp">
+    <ClCompile Include="1-13.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
@@ -41,13 +32,16 @@
     <ClInclude Include="computer_grapics_tool.h">
       <Filter>헤더 파일</Filter>
     </ClInclude>
+    <ClInclude Include="shader.h">
+      <Filter>헤더 파일</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
-    <None Include="vertex.glsl">
-      <Filter>소스 파일</Filter>
-    </None>
     <None Include="fragment.glsl">
-      <Filter>소스 파일</Filter>
+      <Filter>헤더 파일</Filter>
+    </None>
+    <None Include="vertex.glsl">
+      <Filter>헤더 파일</Filter>
     </None>
   </ItemGroup>
 </Project>
