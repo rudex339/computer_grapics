@@ -18,13 +18,10 @@
     <ClCompile Include="computer_grapics_tool.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="1-12.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
     <ClCompile Include="소스.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="1-13.cpp">
+    <ClCompile Include="1-14.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
