@@ -28,11 +28,14 @@ private:
 	GLfloat x_rad, ch_x;
 	GLfloat y_rad, ch_y;
 	GLfloat z_rad;
+	GLfloat wy_rad, wch_y;
 	GLfloat x_move;
 	GLfloat y_move;
 	GLfloat z_move;
 	int shape;
 	int ID;
+	int dir;
+	int count;
 public:
 	Object(int input = 1) {
 		x_rad = 0.0f; ch_x = 0.0f;
@@ -41,16 +44,19 @@ public:
 		x_move = 0.0f;
 		y_move = 0.0f;
 		z_move = 0.0f;
-
+		wy_rad = 0.0f; wch_y=0.0f;
+		count = 0;
 		ID = input;
 		shape = input - 1;
 	}
 	void change_did(bool obtion) {
 		if (obtion) {
 			x_move = 0.5f;
+			dir = 1;
 		}
 		else {
 			x_move = -0.5f;
+			dir = -1;
 		}
 	}
 	void init_buffer() {
@@ -77,20 +83,23 @@ public:
 		//glUseProgram(s_program[2]);
 		glm::mat4 Tx = glm::mat4(1.0f); //--- 이동 행렬 선언
 		glm::mat4 Rz = glm::mat4(1.0f); //--- 회전 행렬 선언
+		glm::mat4 wRz = glm::mat4(1.0f); //--- 회전 행렬 선언
 		glm::mat4 TR = glm::mat4(1.0f);//--- 합성 변환 행렬
 		glm::mat4 sc = glm::mat4(1.0f);
 
-		sc = glm::scale(sc, glm::vec3(0.1, 0.1, 0.1));	
+		sc = glm::scale(sc, glm::vec3(0.1, 0.1, 0.1));
 		Tx = glm::translate(Tx, glm::vec3(x_move, y_move, z_move)); //--- x축으로 이동 행렬
 		Rz = glm::rotate(TR, glm::radians(x_rad), glm::vec3(1.0, 0.0, 0.0));
-		Rz = Rz*glm::rotate(TR, glm::radians(y_rad), glm::vec3(0.0, 1.0, 0.0));
-		Rz = Rz*glm::rotate(TR, glm::radians(z_rad), glm::vec3(0.0, 0.0, 1.0));		
-		
+		Rz = Rz * glm::rotate(TR, glm::radians(y_rad), glm::vec3(0.0, 1.0, 0.0));
+		Rz = Rz * glm::rotate(TR, glm::radians(z_rad), glm::vec3(0.0, 0.0, 1.0));
+		wRz = glm::rotate(wRz, glm::radians(wy_rad), glm::vec3(0.0, 1.0, 0.0));
+
 		TR *= (*Tr_l);
+		TR *= wRz;
 		TR *= Tx;
 		TR *= Rz;
 		TR *= sc;
-		
+
 
 		unsigned int modelLocation = glGetUniformLocation(s_program[ID], "modelTransform"); //--- 버텍스 세이더에서 모델링 변환 위치 가져오기
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(TR));
@@ -102,6 +111,10 @@ public:
 	void update() {
 		x_rad += ch_x;
 		y_rad += ch_y;
+		wy_rad += wch_y;
+		//x_move = (50 - count) * (0.01f) * cos((14.0f*count) * 3.14 / 180);
+		//z_move = (50 - count) * (0.01f) * sin((14.0f * count) * 3.14 / 180);
+		//count++;
 	}
 	void handle_key(char key) {//23
 		switch (key) {
@@ -116,6 +129,9 @@ public:
 			break;
 		case 'B':
 			ch_y = -2.0f;
+			break;
+		case 'r':
+			wch_y = 1.0f;
 			break;
 		}
 	}
@@ -134,7 +150,7 @@ public:
 		}
 	}
 	void change_shape() {
-		shape = (shape+1)%3;
+		shape = (shape + 1) % 3;
 		glUseProgram(s_program[ID]);
 		GLint pAttribute = glGetAttribLocation(s_program[ID], "aPos");
 		glBindVertexArray(VAO);
@@ -148,7 +164,7 @@ public:
 };
 class World {
 private:
-	GLuint line_VAO[3]; GLuint VBO_position[3];
+	GLuint line_VAO[3]; GLuint VBO_position[3]; GLuint cyclone_vao; GLuint cyclone_vbo;
 	GLfloat line_x[2][3]; GLfloat line_y[2][3]; GLfloat line_z[2][3];
 	GLfloat x_rad;
 	GLfloat y_rad, ch_y;
@@ -169,14 +185,14 @@ public:
 		line_z[1][2] = -10.0f; line_z[1][1] = 0.0f; line_z[1][1] = 0.0f;
 
 		x_rad = 40.0f;
-		y_rad = 40.0f; ch_y=0.0f;
+		y_rad = 40.0f; ch_y = 0.0f;
 		z_rad = 0.0f;
 		x_move = 0.0f;
 		y_move = 0.0f;
 		z_move = 0.0f;
 	}
 	void initbuffer() {
-		//glUseProgram(s_program[ID]);
+		glUseProgram(s_program[ID]);
 		GLint pAttribute = glGetAttribLocation(s_program[ID], "aPos");
 		GLint nAttribute = glGetAttribLocation(s_program[ID], "aNormal");
 		GLint cAttribute = glGetAttribLocation(s_program[ID], "in_Color");
@@ -202,6 +218,25 @@ public:
 		glBufferData(GL_ARRAY_BUFFER, 2 * 3 * sizeof(GLfloat), line_z[0], GL_STATIC_DRAW);
 		glVertexAttribPointer(pAttribute, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 		glEnableVertexAttribArray(pAttribute);
+		float cyclone[100][3];
+		float rad = 0.0f;
+		for (int i = 0; i < 50;i++) {
+			cyclone[i][0] = (50-i)*(0.5f/50)*cos(rad*3.14/180); 
+			cyclone[i][2] = (50 - i) * (0.5f / 50) * sin(rad * 3.14 / 180);
+			cyclone[i][1] = 0.0f;
+			cyclone[99-i][0] = (50 - i) * (-0.5f / 50) * cos(rad * 3.14 / 180);
+			cyclone[99-i][2] = (50 - i) * (-0.5f / 50) * sin(rad * 3.14 / 180);
+			cyclone[99-i][1] = 0.0f;
+			rad += 14.0f;
+		}
+		glGenVertexArrays(1, &cyclone_vao);
+		glGenBuffers(1, &cyclone_vbo);
+		glBindVertexArray(cyclone_vao);
+
+		glBindBuffer(GL_ARRAY_BUFFER, cyclone_vbo);
+		glBufferData(GL_ARRAY_BUFFER, 144 * 3 * sizeof(float), cyclone[0], GL_STATIC_DRAW);
+		glVertexAttribPointer(pAttribute, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+		glEnableVertexAttribArray(pAttribute);
 	}
 
 	glm::mat4 draw() {
@@ -216,8 +251,8 @@ public:
 		Tx = glm::translate(Tx, glm::vec3(x_move, y_move, z_move)); //--- x축으로 이동 행렬
 		Rz = glm::rotate(Rz, glm::radians(x_rad), glm::vec3(1.0, 0.0, 0.0));
 		Rz = glm::rotate(Rz, glm::radians(y_rad), glm::vec3(0.0, 1.0, 0.0));
-		Rz = glm::rotate(Rz, glm::radians(z_rad), glm::vec3(0.0, 0.0, 1.0));						
-		
+		Rz = glm::rotate(Rz, glm::radians(z_rad), glm::vec3(0.0, 0.0, 1.0));
+
 		TR *= Rz;
 		unsigned int modelLocation = glGetUniformLocation(s_program[ID], "modelTransform"); //--- 버텍스 세이더에서 모델링 변환 위치 가져오기
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(TR));
@@ -227,20 +262,15 @@ public:
 			glPointSize(2.0);
 			glDrawArrays(GL_LINES, 0, 2);
 		}
+		glBindVertexArray(cyclone_vao);
+		for (int i = 0; i < 99; i++) {
+			glDrawArrays(GL_LINES, i, 2);
+		}
 		return Rz;
 	}
 	void update() {
-		y_rad += ch_y;
 	}
 	void handle_key(char key) {//23
-		switch (key) {
-		case 'R':
-			ch_y = 1.0f;
-			break;
-		case 'r':
-			ch_y = -1.0f;
-			break;
-		}
 	}
 	void reset() {
 		x_rad = 40.0f;
@@ -287,7 +317,7 @@ int main(int argc, char** argv)
 	GLuint fShader[4];
 	vShader[0] = MakeVertexShader("vertex.glsl", 0);			// Sun
 	fShader[0] = MakeFragmentShader("fragment.glsl", 0);
-	for (int i = 0; i < 3; i++) {
+	for (int i = 0; i < 4; i++) {
 
 		// shader Program
 		s_program[i] = glCreateProgram();
@@ -350,14 +380,15 @@ void Keyboard(unsigned char key, int x, int y)
 	if (key == 'q') {
 		glutLeaveMainLoop();
 	}
-	else if (key == 'x' || key == 'X' || key == 'y' || key == 'Y') {
+	else if (key == 'x' || key == 'X' || key == 'y' || key == 'Y' ) {
 		satel[0].handle_key(key - 23);
 	}
 	else if (key == 'a' || key == 'A' || key == 'b' || key == 'B') {
 		satel[1].handle_key(key);
 	}
 	else if (key == 'r' || key == 'R') {
-		wod.handle_key(key);
+		satel[0].handle_key(key);
+		satel[1].handle_key(key);
 	}
 	else if (key == 's') {
 		satel[0].reset('r');
@@ -382,6 +413,6 @@ void TimerFunction(int value)
 
 void spckeycallback(int key, int x, int y) {
 
-	
+
 	glutPostRedisplay();
 }

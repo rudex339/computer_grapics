@@ -21,10 +21,7 @@
     <ClCompile Include="1-14.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
-    <ClCompile Include="1-week\1-13.cpp">
-      <Filter>소스 파일</Filter>
-    </ClCompile>
-    <ClCompile Include="소스.cpp">
+    <ClCompile Include="1-15.cpp">
       <Filter>소스 파일</Filter>
     </ClCompile>
   </ItemGroup>
