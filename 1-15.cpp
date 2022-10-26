@@ -34,7 +34,7 @@ private:
 	GLfloat z_move;
 	int shape;
 	int ID;
-	int dir;
+	int dir, turn;
 	int count;
 public:
 	Object(int input = 1) {
@@ -46,17 +46,18 @@ public:
 		z_move = 0.0f;
 		wy_rad = 0.0f; wch_y=0.0f;
 		count = 0;
+		turn = 0;
 		ID = input;
 		shape = input - 1;
 	}
 	void change_did(bool obtion) {
 		if (obtion) {
 			x_move = 0.5f;
-			dir = 1;
+			dir = -1;
 		}
 		else {
 			x_move = -0.5f;
-			dir = -1;
+			dir = 1;
 		}
 	}
 	void init_buffer() {
@@ -112,9 +113,15 @@ public:
 		x_rad += ch_x;
 		y_rad += ch_y;
 		wy_rad += wch_y;
-		//x_move = (50 - count) * (0.01f) * cos((14.0f*count) * 3.14 / 180);
-		//z_move = (50 - count) * (0.01f) * sin((14.0f * count) * 3.14 / 180);
-		//count++;
+		if (turn) {
+			x_move = dir * (50 - count) * (0.01f);
+			count++;
+			if (count >= 100) {
+				dir *= -1;
+				wch_y *= -1;
+				count = 0;
+			}
+		}
 	}
 	void handle_key(char key) {//23
 		switch (key) {
@@ -131,7 +138,8 @@ public:
 			ch_y = -2.0f;
 			break;
 		case 'r':
-			wch_y = 1.0f;
+			wch_y = 14.0f;
+			turn = 1;
 			break;
 		}
 	}
@@ -408,7 +416,7 @@ void TimerFunction(int value)
 	satel[0].update();
 	satel[1].update();
 	glutPostRedisplay(); // 화면 재 출력
-	glutTimerFunc(10, TimerFunction, 1);
+	glutTimerFunc(100, TimerFunction, 1);
 }
 
 void spckeycallback(int key, int x, int y) {
