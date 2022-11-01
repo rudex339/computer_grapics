@@ -36,8 +36,12 @@ private:
 	int ID;
 	int dir, turn;
 	int count;
+	bool move_center;
+	bool change_pos;
 public:
 	Object(int input = 1) {
+		move_center = false;
+		change_pos = false;
 		x_rad = 0.0f; ch_x = 0.0f;
 		y_rad = 0.0f; ch_y = 0.0f;
 		z_rad = 0.0f;
@@ -53,11 +57,11 @@ public:
 	void change_did(bool obtion) {
 		if (obtion) {
 			x_move = 0.5f;
-			dir = -1;
+			dir = 1;
 		}
 		else {
 			x_move = -0.5f;
-			dir = 1;
+			dir = -1;
 		}
 	}
 	void init_buffer() {
@@ -114,12 +118,45 @@ public:
 		y_rad += ch_y;
 		wy_rad += wch_y;
 		if (turn) {
-			x_move = dir * (50 - count) * (0.01f);
-			count++;
-			if (count >= 100) {
+			x_move =  (50 - count) * (dir * 0.01f);
+		
+			count -= wch_y/14;
+			if (count <= 0) {
+				
+				//dir *= -1;
+
+				wch_y *= -1;
+				turn = false;
+			}
+			else if (count >= 50 ) {
 				dir *= -1;
 				wch_y *= -1;
-				count = 0;
+				
+			}
+		}
+		else if (move_center) {
+			x_move = (50 - count) * (dir * 0.01f);
+			count++;
+
+			if (count == 50) {
+				dir *= -1;
+
+			}
+
+			else if (count == 100) {
+				count = 0; dir *= -1;
+				move_center = false;
+			}
+		}
+
+		else if (change_pos) {
+			x_move = (50 - count) * (dir * 0.01f);
+			count++;
+
+
+			if (count == 100) {
+				count = 0; dir *= -1;
+				change_pos = false;
 			}
 		}
 	}
@@ -138,8 +175,14 @@ public:
 			ch_y = -2.0f;
 			break;
 		case 'r':
-			wch_y = 14.0f;
+			wch_y = -14.0f;
 			turn = 1;
+			break;
+		case 't':
+			move_center = true;
+			break;
+		case 's':
+			change_pos = true;
 			break;
 		}
 	}
@@ -181,8 +224,10 @@ private:
 	GLfloat y_move;
 	GLfloat z_move;
 	int ID;
+	bool draw_turn;
 public:
 	World() {
+		draw_turn = false;
 		ID = 0;
 		line_VAO[0] = 0; line_VAO[1] = 0; line_VAO[2] = 0;
 		line_x[0][0] = 10.0f; line_x[0][1] = 0.0f; line_x[0][2] = 0.0f;
@@ -229,11 +274,12 @@ public:
 		float cyclone[100][3];
 		float rad = 0.0f;
 		for (int i = 0; i < 50;i++) {
-			cyclone[i][0] = (50-i)*(0.5f/50)*cos(rad*3.14/180); 
-			cyclone[i][2] = (50 - i) * (0.5f / 50) * sin(rad * 3.14 / 180);
+			cyclone[i][0] = (50-i)*(-0.5f/50)*cos(rad*3.14/180); 
+			cyclone[i][2] = (50 - i) * (-
+				0.5f / 50) * sin(rad * 3.14 / 180);
 			cyclone[i][1] = 0.0f;
-			cyclone[99-i][0] = (50 - i) * (-0.5f / 50) * cos(rad * 3.14 / 180);
-			cyclone[99-i][2] = (50 - i) * (-0.5f / 50) * sin(rad * 3.14 / 180);
+			cyclone[99-i][0] = (50 - i) * (0.5f / 50) * cos(rad * 3.14 / 180);
+			cyclone[99-i][2] = (50 - i) * (0.5f / 50) * sin(rad * 3.14 / 180);
 			cyclone[99-i][1] = 0.0f;
 			rad += 14.0f;
 		}
@@ -270,15 +316,20 @@ public:
 			glPointSize(2.0);
 			glDrawArrays(GL_LINES, 0, 2);
 		}
-		glBindVertexArray(cyclone_vao);
-		for (int i = 0; i < 99; i++) {
-			glDrawArrays(GL_LINES, i, 2);
+		if (draw_turn) {
+			glBindVertexArray(cyclone_vao);
+			for (int i = 0; i < 99; i++) {
+				glDrawArrays(GL_LINES, i, 2);
+			}
 		}
 		return Rz;
 	}
 	void update() {
 	}
 	void handle_key(char key) {//23
+		if (key == 'r') {
+			draw_turn = true;
+		}
 	}
 	void reset() {
 		x_rad = 40.0f;
@@ -397,11 +448,16 @@ void Keyboard(unsigned char key, int x, int y)
 	else if (key == 'r' || key == 'R') {
 		satel[0].handle_key(key);
 		satel[1].handle_key(key);
+		wod.handle_key(key);
+	}
+	else if (key == 't' || key == 'T') {
+		satel[0].handle_key(key);
+		satel[1].handle_key(key);
+		wod.handle_key(key);
 	}
 	else if (key == 's') {
-		satel[0].reset('r');
-		satel[1].reset('l');
-		wod.reset();
+		satel[0].handle_key(key);
+		satel[1].handle_key(key);
 	}
 	else if (key == 'c') {
 		satel[0].change_shape();
@@ -416,7 +472,7 @@ void TimerFunction(int value)
 	satel[0].update();
 	satel[1].update();
 	glutPostRedisplay(); // 화면 재 출력
-	glutTimerFunc(100, TimerFunction, 1);
+	glutTimerFunc(10, TimerFunction, 1);
 }
 
 void spckeycallback(int key, int x, int y) {
