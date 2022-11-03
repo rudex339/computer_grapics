@@ -2,7 +2,7 @@
 #include "computer_grapics_tool.h"
 
 
-GLuint s_program[4];
+GLuint s_program[7];
 
 GLuint v_shader_id;
 GLuint f_shader_id;
