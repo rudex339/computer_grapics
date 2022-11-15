@@ -3,6 +3,7 @@
 
 #include "shader.h"
 #include "computer_grapics_tool.h"
+#include <random>
 
 using namespace std;
 
@@ -18,39 +19,52 @@ void spckeycallback(int key, int x, int y);
 GLvoid TimerFunction(int value);
 void InitBuffer();
 
+std::random_device rd;
 
 //--- load obj related variabales
 objRead objReader;
 GLint object = objReader.loadObj_normalize_center("circle.obj");
 class Object {
 private:
-	GLuint VAO; GLuint VBO_position; GLuint VBO_normal;
+	GLuint VAO; GLuint VBO_position; GLuint VBO_color;
 	GLfloat x_rad, ch_x;
 	GLfloat y_rad, ch_y;
 	GLfloat z_rad;
 	GLfloat x_move;
 	GLfloat y_move;
 	GLfloat z_move;
+	GLfloat scale;
 	int shape;
 	int ID;
+	Object* satel;
 public:
-	Object(int input,float in_z_rad) {
+	Object(float in_z_rad, float sc = 1.0f) {
 		x_rad = 0.0f; ch_x = 0.0f;
-		y_rad = 0.0f; ch_y = 0.0f;
+		y_rad = 0.0f; ch_y = 1.0f;
 		z_rad = in_z_rad;
-		x_move = 0.0f;
+		x_move = 0.5f;
 		y_move = 0.0f;
 		z_move = 0.0f;
-
-		ID = input;
+		scale = sc;
 	}
 	void init_buffer() {
-		glUseProgram(s_program[ID]);
-		GLint pAttribute = glGetAttribLocation(s_program[ID], "aPos");
+		std::uniform_real_distribution <float> uid(0.0f, 1.0f);
+		float color[2880][3];
+		float r = uid(rd);
+		float g = uid(rd);
+		float b = uid(rd);
+		for (int i = 0; i < 2880; i++) {
+			color[i][0] = r;
+			color[i][2] = b;
+			color[i][1] = g;
+		}
+		glUseProgram(s_program[0]);
+		GLint pAttribute = glGetAttribLocation(s_program[0], "aPos");
+		GLint cAttribute = glGetAttribLocation(s_program[0], "in_Color");
 
 		glGenVertexArrays(1, &VAO);
 		glGenBuffers(1, &VBO_position);
-		glGenBuffers(1, &VBO_normal);
+		glGenBuffers(1, &VBO_color);
 		glBindVertexArray(VAO);
 
 		glBindBuffer(GL_ARRAY_BUFFER, VBO_position);
@@ -58,35 +72,57 @@ public:
 
 		glVertexAttribPointer(pAttribute, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 		glEnableVertexAttribArray(pAttribute);
+
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_color);
+		glBufferData(GL_ARRAY_BUFFER, objReader.outvertex.size() * sizeof(glm::vec3), color[0], GL_STATIC_DRAW);
+
+		glVertexAttribPointer(cAttribute, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+		glEnableVertexAttribArray(cAttribute);
 	}
 	void delete_buffer() {
-		glDeleteBuffers(1, &VBO_normal);
+		glDeleteBuffers(1, &VBO_color);
 		glDeleteBuffers(1, &VBO_position);
 		glDeleteBuffers(1, &VAO);
 	}
-	void draw(const glm::mat4* Tr_l) {
-
+	void draw(const glm::mat4 Tr_l, GLuint vao_c) {
 		glm::mat4 Tx = glm::mat4(1.0f); //--- 이동 행렬 선언
 		glm::mat4 Rz = glm::mat4(1.0f); //--- 회전 행렬 선언
-		glm::mat4 TR = glm::mat4(1.0f);//--- 합성 변환 행렬
 		glm::mat4 sc = glm::mat4(1.0f);
-
+		glm::mat4 TR = glm::mat4(1.0f);//--- 합성 변환 행렬
+		glm::vec4 set = { 0.0, 0.0, 0.0, 1.0 };
 		sc = glm::scale(sc, glm::vec3(0.1, 0.1, 0.1));
 		Tx = glm::translate(Tx, glm::vec3(x_move, y_move, z_move)); //--- x축으로 이동 행렬
-		Rz *= glm::rotate(TR, glm::radians(x_rad), glm::vec3(1.0, 0.0, 0.0));
-		Rz *= glm::rotate(TR, glm::radians(y_rad), glm::vec3(0.0, 1.0, 0.0));
-		Rz *= glm::rotate(TR, glm::radians(z_rad), glm::vec3(0.0, 0.0, 1.0));
-
-		TR *= (*Tr_l);
-		TR *= Tx;
-		TR *= Rz;
-		TR *= sc;
-
-		unsigned int modelLocation = glGetUniformLocation(s_program[ID], "modelTransform"); //--- 버텍스 세이더에서 모델링 변환 위치 가져오기
-		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(TR));
-		glDrawArrays(GL_TRIANGLES, 0, object);
+		Rz = glm::rotate(TR, glm::radians(y_rad), glm::vec3(0.0, 1.0, 0.0))* Rz;
+		Rz = glm::rotate(TR, glm::radians(x_rad), glm::vec3(1.0, 0.0, 0.0)) * Rz;
+		Rz = glm::rotate(TR, glm::radians(z_rad), glm::vec3(0.0, 0.0, 1.0)) * Rz;
 
 		
+		set = Rz * Tx * set;
+		glm::mat4 Tx2 = glm::mat4(1.0f);
+		Tx2 = glm::translate(Tx2, glm::vec3(set[0], set[1], set[2]));
+		TR =  Tr_l*Tx2 *sc;
+
+		unsigned int modelLocation = glGetUniformLocation(s_program[0], "modelTransform"); //--- 버텍스 세이더에서 모델링 변환 위치 가져오기
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(TR));
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, object);
+
+		sc = glm::scale(sc, glm::vec3(2.0, 2.0, 2.0));
+		TR = Tr_l * Tx2 * sc;
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(TR));
+		glBindVertexArray(vao_c);
+		for (int i = 0; i < 100; i++)
+			glDrawArrays(GL_LINES, i, 2);
+
+		glm::mat4 Tx3 = glm::mat4(1.0f);
+		glm::mat4 Rz2 = glm::mat4(1.0f);
+		Tx3 = glm::translate(Tx3, glm::vec3(0.2, 0, 0));
+		sc = glm::scale(sc, glm::vec3(0.3, 0.3, 0.3));
+		Rz2 = glm::rotate(Rz2, glm::radians(y_rad), glm::vec3(0.0, 1.0, 0.0)) * Rz2;
+		TR = Tr_l * Tx2*Rz2 * Tx3 * sc;
+		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(TR));
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, object);
 	}
 	void update() {
 		x_rad += ch_x;
@@ -95,17 +131,18 @@ public:
 };
 class World {
 private:
-	GLuint VAO; GLuint VBO;
-	GLuint VAO_c; GLuint VBO_c;
+	GLuint VAO; GLuint VBO[2];
+	GLuint VAO_c; GLuint VBO_c[2];
 	GLfloat x_rad;
 	GLfloat y_rad;
 	GLfloat z_rad;
 	GLfloat x_move;
 	GLfloat y_move;
 	GLfloat z_move;
+	Object ob[3]= { Object(0,0.1),Object(45.0f,0.1) ,Object(-45.0f,0.1) };
 public:
 	World() {
-		x_rad = 20.0f;
+		x_rad =- 20.0f;
 		y_rad = 0.0f;
 		z_rad = 0.0f;
 		x_move = 0.0f;
@@ -113,21 +150,39 @@ public:
 		z_move = 0.0f;
 	}
 	void initbuffer() {
+		std::uniform_real_distribution <float> uid(0.0f, 1.0f);
 		glUseProgram(s_program[0]);
 		GLint pAttribute = glGetAttribLocation(s_program[0], "aPos");
 		GLint nAttribute = glGetAttribLocation(s_program[0], "aNormal");
 		GLint cAttribute = glGetAttribLocation(s_program[0], "in_Color");
+		float color[2880][3];
+		float r = uid(rd);
+		float g = uid(rd);
+		float b = uid(rd);
+		for (int i = 0; i < 2880; i++) {
+			color[i][0] = r;
+			color[i][2] = b;
+			color[i][1] = g;
+		}
+
 		glGenVertexArrays(1, &VAO);
-		glGenBuffers(1, &VBO);
+		glGenBuffers(2, VBO);
 		glBindVertexArray(VAO);
 
-		glBindBuffer(GL_ARRAY_BUFFER, VBO);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO[0]);
 		glBufferData(GL_ARRAY_BUFFER, objReader.outvertex.size() * sizeof(glm::vec3), &objReader.outvertex[0], GL_STATIC_DRAW);
 
 		glVertexAttribPointer(pAttribute, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 		glEnableVertexAttribArray(pAttribute);
 
+		glBindBuffer(GL_ARRAY_BUFFER, VBO[1]);
+		glBufferData(GL_ARRAY_BUFFER, objReader.outvertex.size() * sizeof(glm::vec3), color[0], GL_STATIC_DRAW);
+
+		glVertexAttribPointer(cAttribute, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+		glEnableVertexAttribArray(cAttribute);
+
 		float cyclone[101][3];
+		float cyclone_color[101][3];
 		float rad = 0.0f;
 		for (int i = 0; i < 100; i++) {
 			cyclone[i][0] = cos(rad * 3.14 / 180);
@@ -138,18 +193,34 @@ public:
 		cyclone[100][0] = 1.0f;
 		cyclone[100][2] = 0.0;
 		cyclone[100][1] = 0.0f;
+		for (int i = 0; i < 101; i++) {
+			color[i][0] = 1.0f;
+			color[i][2] = 1.0f;
+			color[i][1] = 1.0f;
+		}
 		glUseProgram(s_program[0]);
 		glGenVertexArrays(1, &VAO_c);
-		glGenBuffers(1, &VBO_c);
+		glGenBuffers(2, VBO_c);
 		glBindVertexArray(VAO_c);
 
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_c);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_c[0]);
 		glBufferData(GL_ARRAY_BUFFER,303 * sizeof(float), cyclone[0], GL_STATIC_DRAW);
 
 		glVertexAttribPointer(pAttribute, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 		glEnableVertexAttribArray(pAttribute);
-	}
 
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_c[1]);
+		glBufferData(GL_ARRAY_BUFFER, 303 * sizeof(float), color[0], GL_STATIC_DRAW);
+
+		glVertexAttribPointer(cAttribute, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+		glEnableVertexAttribArray(cAttribute);
+	}
+	void init_buffer_all() {
+		initbuffer();
+		ob[0].init_buffer();
+		ob[1].init_buffer();
+		ob[2].init_buffer();
+	}
 	glm::mat4 draw() {
 		//glEnable(GL_DEPTH_TEST);
 		glUseProgram(s_program[0]);
@@ -162,9 +233,9 @@ public:
 
 		sc = glm::scale(sc, glm::vec3(0.2, 0.2, 0.2));
 		Tx = glm::translate(Tx, glm::vec3(x_move, y_move, z_move)); //--- x축으로 이동 행렬
-		Rz = glm::rotate(Rz, glm::radians(x_rad), glm::vec3(1.0, 0.0, 0.0));
-		Rz = glm::rotate(Rz, glm::radians(y_rad), glm::vec3(0.0, 1.0, 0.0));
-		Rz = glm::rotate(Rz, glm::radians(z_rad), glm::vec3(0.0, 0.0, 1.0));
+		Rz *= glm::rotate(TR, glm::radians(x_rad), glm::vec3(1.0, 0.0, 0.0));
+		Rz *= glm::rotate(TR, glm::radians(y_rad), glm::vec3(0.0, 1.0, 0.0));
+		Rz *= glm::rotate(TR, glm::radians(z_rad), glm::vec3(0.0, 0.0, 1.0));
 
 		TR = Tx*Rz*sc;
 		unsigned int modelLocation = glGetUniformLocation(s_program[0], "modelTransform"); //--- 버텍스 세이더에서 모델링 변환 위치 가져오기
@@ -180,22 +251,30 @@ public:
 		glBindVertexArray(VAO_c);
 		for(int i = 0;i<100;i++)
 			glDrawArrays(GL_LINES, i, 2);		
+		
 
 		Rz2 = glm::rotate(Rz2, glm::radians(45.0f), glm::vec3(0.0, 0.0, 1.0));
-		TR = Tx * Rz2*Rz * sc;
+		TR = Tx * Rz * Rz2 * sc;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(TR));
 		for (int i = 0; i < 100; i++)
 			glDrawArrays(GL_LINES, i, 2);
 
 		Rz2 = glm::mat4(1.0f);
 		Rz2 = glm::rotate(Rz2, glm::radians(-45.0f), glm::vec3(0.0, 0.0, 1.0));
-		TR = Tx * Rz2 * Rz * sc;
+		TR = Tx * Rz * Rz2 * sc;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(TR));
 		for (int i = 0; i < 100; i++)
 			glDrawArrays(GL_LINES, i, 2);
+
+		ob[0].draw(Rz, VAO_c);
+		ob[1].draw(Rz, VAO_c);
+		ob[2].draw(Rz, VAO_c);
 		return Rz;
 	}
 	void update() {
+		ob[0].update();
+		ob[1].update();
+		ob[2].update();
 	}
 	void handle_key(char key) {//23
 		switch (key) {
@@ -244,18 +323,12 @@ int main(int argc, char** argv)
 	GLuint fShader[7];
 	vShader[0] = MakeVertexShader("vertex.glsl", 0);			// Sun
 	fShader[0] = MakeFragmentShader("1-17_fragment/fragment (1).glsl", 0);
-	fShader[1] = MakeFragmentShader("1-17_fragment/fragment (2).glsl", 0);
-	fShader[2] = MakeFragmentShader("1-17_fragment/fragment (3).glsl", 0);
-	fShader[3] = MakeFragmentShader("1-17_fragment/fragment (4).glsl", 0);
-	fShader[4] = MakeFragmentShader("1-17_fragment/fragment (5).glsl", 0);
-	fShader[5] = MakeFragmentShader("1-17_fragment/fragment (6).glsl", 0);
-	fShader[6] = MakeFragmentShader("1-17_fragment/fragment (7).glsl", 0);
 	for (int i = 0; i < 6; i++) {
 
 		// shader Program
 		s_program[i] = glCreateProgram();
 		glAttachShader(s_program[i], vShader[0]);
-		glAttachShader(s_program[i], fShader[i]);
+		glAttachShader(s_program[i], fShader[0]);
 		glLinkProgram(s_program[i]);
 		checkCompileErrors(s_program[i], "PROGRAM");
 	}
@@ -279,7 +352,7 @@ int main(int argc, char** argv)
 
 void InitBuffer()
 {
-	wod.initbuffer();
+	wod.init_buffer_all();
 	
 	//// 5.1. VAO 객체 생성 및 바인딩
 }
