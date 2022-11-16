@@ -18,7 +18,7 @@ void Keyboard(unsigned char key, int x, int y);
 void spckeycallback(int key, int x, int y);
 GLvoid TimerFunction(int value);
 void InitBuffer();
-
+bool Fill_on;
 std::random_device rd;
 
 //--- load obj related variabales
@@ -347,6 +347,7 @@ World wod;
 int main(int argc, char** argv)
 {
 	// create window using freeglut
+	Fill_on = false;
 	glutInit(&argc, argv);
 	glutInitDisplayMode(GLUT_DOUBLE | GLUT_RGBA | GLUT_DEPTH);
 	glutInitWindowSize(g_window_w, g_window_h);
@@ -417,7 +418,10 @@ void Display()
 	glDepthFunc(GL_LESS);
 	glClearColor(0.0f, 0.0f, 0.0f, 0.0f);
 	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-	//glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	if (Fill_on)
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+	else
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
 
 	glm::mat4 TR = glm::mat4(1.0f);
 	TR = wod.draw();
