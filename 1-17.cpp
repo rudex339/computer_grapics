@@ -26,7 +26,7 @@ objRead objReader;
 GLint object = objReader.loadObj_normalize_center("circle.obj");
 class Object {
 private:
-	GLuint VAO; GLuint VBO_position; GLuint VBO_color;
+	GLuint VAO[2]; GLuint VBO_position[2]; GLuint VBO_color[2];
 	GLfloat x_rad, ch_x;
 	GLfloat y_rad, ch_y;
 	GLfloat z_rad;
@@ -36,7 +36,6 @@ private:
 	GLfloat scale;
 	int shape;
 	int ID;
-	Object* satel;
 public:
 	Object(float in_z_rad, float sc = 1.0f) {
 		x_rad = 0.0f; ch_x = 0.0f;
@@ -62,27 +61,48 @@ public:
 		GLint pAttribute = glGetAttribLocation(s_program[0], "aPos");
 		GLint cAttribute = glGetAttribLocation(s_program[0], "in_Color");
 
-		glGenVertexArrays(1, &VAO);
-		glGenBuffers(1, &VBO_position);
-		glGenBuffers(1, &VBO_color);
-		glBindVertexArray(VAO);
+		glGenVertexArrays(2, VAO);
+		glGenBuffers(2, VBO_position);
+		glGenBuffers(2, VBO_color);
+		glBindVertexArray(VAO[0]);
 
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_position);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_position[0]);
 		glBufferData(GL_ARRAY_BUFFER, objReader.outvertex.size() * sizeof(glm::vec3), &objReader.outvertex[0], GL_STATIC_DRAW);
 
 		glVertexAttribPointer(pAttribute, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 		glEnableVertexAttribArray(pAttribute);
 
-		glBindBuffer(GL_ARRAY_BUFFER, VBO_color);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_color[0]);
+		glBufferData(GL_ARRAY_BUFFER, objReader.outvertex.size() * sizeof(glm::vec3), color[0], GL_STATIC_DRAW);
+
+		glVertexAttribPointer(cAttribute, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+		glEnableVertexAttribArray(cAttribute);
+
+		r = uid(rd);
+		g = uid(rd);
+		b = uid(rd);
+		for (int i = 0; i < 2880; i++) {
+			color[i][0] = r;
+			color[i][2] = b;
+			color[i][1] = g;
+		}
+		glBindVertexArray(VAO[1]);
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_position[1]);
+		glBufferData(GL_ARRAY_BUFFER, objReader.outvertex.size() * sizeof(glm::vec3), &objReader.outvertex[0], GL_STATIC_DRAW);
+
+		glVertexAttribPointer(pAttribute, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
+		glEnableVertexAttribArray(pAttribute);
+
+		glBindBuffer(GL_ARRAY_BUFFER, VBO_color[1]);
 		glBufferData(GL_ARRAY_BUFFER, objReader.outvertex.size() * sizeof(glm::vec3), color[0], GL_STATIC_DRAW);
 
 		glVertexAttribPointer(cAttribute, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), 0);
 		glEnableVertexAttribArray(cAttribute);
 	}
 	void delete_buffer() {
-		glDeleteBuffers(1, &VBO_color);
-		glDeleteBuffers(1, &VBO_position);
-		glDeleteBuffers(1, &VAO);
+		glDeleteBuffers(2, VBO_color);
+		glDeleteBuffers(2, VBO_position);
+		glDeleteBuffers(2, VAO);
 	}
 	void draw(const glm::mat4 Tr_l, GLuint vao_c) {
 		glm::mat4 Tx = glm::mat4(1.0f); //--- 이동 행렬 선언
@@ -104,7 +124,7 @@ public:
 
 		unsigned int modelLocation = glGetUniformLocation(s_program[0], "modelTransform"); //--- 버텍스 세이더에서 모델링 변환 위치 가져오기
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(TR));
-		glBindVertexArray(VAO);
+		glBindVertexArray(VAO[0]);
 		glDrawArrays(GL_TRIANGLES, 0, object);
 
 		sc = glm::scale(sc, glm::vec3(2.0, 2.0, 2.0));
@@ -121,19 +141,24 @@ public:
 		Rz2 = glm::rotate(Rz2, glm::radians(y_rad), glm::vec3(0.0, 1.0, 0.0)) * Rz2;
 		TR = Tr_l * Tx2*Rz2 * Tx3 * sc;
 		glUniformMatrix4fv(modelLocation, 1, GL_FALSE, glm::value_ptr(TR));
-		glBindVertexArray(VAO);
+		glBindVertexArray(VAO[1]);
 		glDrawArrays(GL_TRIANGLES, 0, object);
 	}
 	void update() {
 		x_rad += ch_x;
 		y_rad += ch_y;
 	}	
+	void handle_key(char key) {//23
+		switch (key) {
+
+		}
+	}
 };
 class World {
 private:
 	GLuint VAO; GLuint VBO[2];
 	GLuint VAO_c; GLuint VBO_c[2];
-	GLfloat x_rad;
+	GLfloat x_rad; GLfloat y_rad_ch;
 	GLfloat y_rad;
 	GLfloat z_rad;
 	GLfloat x_move;
@@ -148,6 +173,7 @@ public:
 		x_move = 0.0f;
 		y_move = 0.0f;
 		z_move = 0.0f;
+		y_rad_ch = 0.0f;
 	}
 	void initbuffer() {
 		std::uniform_real_distribution <float> uid(0.0f, 1.0f);
@@ -266,20 +292,47 @@ public:
 		for (int i = 0; i < 100; i++)
 			glDrawArrays(GL_LINES, i, 2);
 
-		ob[0].draw(Rz, VAO_c);
-		ob[1].draw(Rz, VAO_c);
-		ob[2].draw(Rz, VAO_c);
+		ob[0].draw(Tx * Rz, VAO_c);
+		ob[1].draw(Tx * Rz, VAO_c);
+		ob[2].draw(Tx * Rz, VAO_c);
 		return Rz;
 	}
 	void update() {
+		y_rad += y_rad_ch;
 		ob[0].update();
 		ob[1].update();
 		ob[2].update();
 	}
 	void handle_key(char key) {//23
 		switch (key) {
-		
+		case 'w':
+			y_move += 0.01f;
+			break;
+		case 'a':
+			x_move -= 0.01f;
+			break;
+		case 's':
+			y_move -= 0.01f;
+			break;
+		case 'd':
+			x_move += 0.01f;
+			break;
+		case 'z':
+			z_move += 0.01f;
+			break;
+		case 'x':
+			z_move += 0.01f;
+			break;
+		case 'y':
+			y_rad_ch += 0.01f;
+			break;
+		case 'Y':
+			y_rad_ch -= 0.01f;
+			break;
 		}
+		ob[0].handle_key(key);
+		ob[1].handle_key(key);
+		ob[2].handle_key(key);
 	}
 	void reset() {
 		x_rad = 40.0f;
@@ -387,7 +440,19 @@ void Keyboard(unsigned char key, int x, int y)
 	if (key == 'q') {
 		glutLeaveMainLoop();
 	}
-	
+	else if (key == 'p') {
+		glutLeaveMainLoop();
+	}
+	else if (key == 'P') {
+		glutLeaveMainLoop();
+	}
+	else if (key == 'm') {
+		glutLeaveMainLoop();
+	}
+	else if (key == 'M') {
+		glutLeaveMainLoop();
+	}
+	wod.handle_key(key);
 	glutPostRedisplay();
 }
 
